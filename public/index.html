@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Yungy's Ranking System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #7090c5 0%, #cdd7e3 50%, #7090c5 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        header { 
+            text-align: center; 
+            padding: 30px; 
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.5));
+        }
+
+        h1 { font-size: 2.5em; margin-bottom: 10px; }
+
+        .tabs { 
+            display: flex; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .tab { 
+            padding: 10px 20px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .tab:hover, .tab.active { 
+            background: rgba(255,255,255,0.3); 
+        }
+
+        .admin-btn { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            padding: 10px 20px; 
+            background: #e74c3c;
+            border: none;
+            border-radius: 20px; 
+            color: white; 
+            cursor: pointer;
+        }
+
+        .board { 
+            background: rgba(0,0,0,0.4); 
+            border-radius: 20px; 
+            padding: 20px;
+        }
+
+        .row { 
+            display: grid; 
+            grid-template-columns: 60px 1fr 100px 100px 80px 80px; 
+            padding: 15px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .header { font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.3); }
+
+        .rank { font-size: 1.2em; font-weight: bold; }
+        .rank.top-1 { color: gold; }
+        .rank.top-2 { color: silver; }
+        .rank.top-3 { color: #cd7f32; }
+
+        .name { text-align: left; }
+        .elo { color: #2ecc71; font-weight: bold; }
+        .matches { color: #f39c12; }
+        .wins { color: #3498db; }
+        .losses { color: #e74c3c; }
+
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            justify-content: center; 
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content { 
+            background: #2c3e50; 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 90%;
+            max-width: 400px;
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+            border: none;
+        }
+
+        button.submit { 
+            width: 100%; 
+            padding: 12px; 
+            background: #27ae60; 
+            border: none; 
+            border-radius: 5px; 
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg"></div>
+    
+    <div class="container">
+        <header>
+            <img src="sword.png" alt="Sword" class="logo">
+            <h1>Yungy's Ranking System</h1>
+            <p>Minecraft 1.9+ PvP | Asia Region</p>
+        </header>
+        
+        <button class="admin-btn" onclick="openAdmin()">🔒 Admin</button>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="setMode('global')">Global</div>
+            <div class="tab" onclick="setMode('modern_smp')">Modern SMP</div>
+            <div class="tab" onclick="setMode('sword')">Sword</div>
+            <div class="tab" onclick="setMode('diamond_pot')">Diamond Pot</div>
+            <div class="tab" onclick="setMode('netherite_pot')">Netherite Pot</div>
+            <div class="tab" onclick="setMode('axe')">Axe</div>
+            <div class="tab" onclick="setMode('modern_uhc')">Modern UHC</div>
+            <div class="tab" onclick="setMode('mace')">Mace</div>
+            <div class="tab" onclick="setMode('crystal')">Crystal</div>
+        </div>
+        
+        <div class="board">
+            <div class="row header">
+                <span>Rank</span>
+                <span>Player</span>
+                <span>ELO</span>
+                <span>Matches</span>
+                <span>Wins</span>
+                <span>Losses</span>
+            </div>
+            <div id="board"></div>
+        </div>
+    </div>
+    
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <h2>🔐 Admin Panel</h2>
+            <div id="loginForm">
+                <input type="password" id="adminKey" placeholder="Admin Key">
+                <button class="submit" onclick="login()">Login</button>
+            </div>
+            <div id="adminForm" style="display:none">
+                <input type="text" id="pName" placeholder="Username">
+                <select id="pMode">
+                    <option value="global">Global</option>
+                    <option value="modern_smp">Modern SMP</option>
+                    <option value="sword">Sword</option>
+                    <option value="diamond_pot">Diamond Pot</option>
+                    <option value="netherite_pot">Netherite Pot</option>
+                    <option value="axe">Axe</option>
+                    <option value="modern_uhc">Modern UHC</option>
+                    <option value="mace">Mace</option>
+                    <option value="crystal">Crystal</option>
+                </select>
+                <input type="number" id="pElo" placeholder="New ELO">
+                <button class="submit" onclick="updateRating()">Update Rating</button>
+            </div>
+            <button class="submit" onclick="closeAdmin()" style="background:#c0392b;margin-top:10px">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let currentMode = 'global';
+        let adminKey = '';
+        
+        const evtSource = new EventSource(API_URL + '/api/leaderboard/stream');
+        evtSource.onmessage = () => loadBoard();
+        
+        function setMode(m) {
+            currentMode = m;
+            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadBoard();
+        }
+        
+        async function loadBoard() {
+            const ep = currentMode==='global'?'/api/leaderboard/global':'/api/leaderboard/'+currentMode;
+            const res = await fetch(API_URL + ep);
+            const data = await res.json();
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            (data.leaderboard||[]).forEach((p,i)=>{
+                const elo = currentMode==='global'?p.global_score:p.elo||p[currentMode+'_elo'];
+                board.innerHTML += `<div class="row">
+                    <span class="rank ${i<3?'top-'+(i+1):''}">#${i+1}</span>
+                    <span class="name">${p.username}</span>
+                    <span class="elo">${elo}</span>
+                    <span class="matches">${p.matches_played}</span>
+                    <span class="wins">${p.wins}</span>
+                    <span class="losses">${p.losses}</span>
+                </div>`;
+            });
+        }
+        
+        function openAdmin() { document.getElementById('adminModal').classList.add('active'); }
+        function closeAdmin() { document.getElementById('adminModal').classList.remove('active'); }
+        function login() { 
+            adminKey = document.getElementById('adminKey').value; 
+            document.getElementById('loginForm').style.display='none'; 
+            document.getElementById('adminForm').style.display='block'; 
+        }
+        
+        async function updateRating() {
+            const res = await fetch(API_URL + '/admin/update_rating', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    admin_key: adminKey,
+                    username: document.getElementById('pName').value,
+                    gamemode: document.getElementById('pMode').value,
+                    new_elo: parseInt(document.getElementById('pElo').value)
+                })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            if(data.success) loadBoard();
+        }
+        
+        loadBoard();
+    </script>
+</body>
+</html>
